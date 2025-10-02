@@ -19,6 +19,30 @@ textarea {height:160px;}
 pre {background:#111; padding:10px; border-radius:8px; overflow:auto; max-height:200px; text-align:left; font-size:0.85rem;}
 footer {margin-top:20px; color:#888; font-size:0.85rem; position:fixed; bottom:0; width:100%; text-align:center; background:rgba(0,0,0,0.5); padding:10px;}
 
+/* Audio Player style */
+#audioPlayer {
+  position:fixed;
+  bottom:50px;
+  left:0;
+  width:100%;
+  background:rgba(0,0,0,0.7);
+  padding:10px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  z-index:10;
+}
+#audioPlayer button {
+  padding:6px 12px;
+  background:#0ff;
+  color:#000;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  box-shadow:0 0 8px #0ff;
+}
+
 /* Responsive tweaks */
 @media (max-width:600px){
   h1{font-size:1.4rem;}
@@ -68,6 +92,15 @@ footer {margin-top:20px; color:#888; font-size:0.85rem; position:fixed; bottom:0
 </div>
 
 <footer>✨ Dibuat dengan ❤ oleh Yongky — v1</footer>
+</div>
+
+<!-- Audio Player -->
+<div id="audioPlayer">
+  <button id="playBtn">▶️ Play</button>
+  <button id="pauseBtn">⏸️ Pause</button>
+  <button id="stopBtn">⏹️ Stop</button>
+  <span style="color:#0ff;font-size:0.9rem;">Now playing: narwhal.mp3</span>
+  <audio id="bgAudio" src="narwhal.mp3"></audio>
 </div>
 
 <script>
@@ -162,7 +195,6 @@ async function copySource(){
   }
 }
 
-// Fallback copy pakai textarea sementara
 function fallbackCopy(text){
   const temp=document.createElement("textarea");
   temp.value=text;
@@ -190,6 +222,19 @@ async function cekHeaders(){
     hdrs.textContent="Status: "+r.status+" "+r.statusText+"\nNote: header asli terbatas di client-side.";
   }catch(e){hdrs.textContent="Error: "+e;}
 }
+
+// Audio Player
+const audio = document.getElementById('bgAudio');
+document.getElementById('playBtn').addEventListener('click', ()=>audio.play());
+document.getElementById('pauseBtn').addEventListener('click', ()=>audio.pause());
+document.getElementById('stopBtn').addEventListener('click', ()=>{
+  audio.pause();
+  audio.currentTime = 0;
+});
+audio.addEventListener('ended', ()=>{
+  audio.currentTime = 0;
+  audio.play();
+});
 </script>
 </body>
   </html>
