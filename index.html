@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Web Tools by Yongky v1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {margin:0; background:#000; color:#fff; font-family:Arial,sans-serif; text-align:center; overflow-x:hidden;}
+canvas {position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1;}
+.container {max-width:950px; width:95%; margin:auto; padding:20px;}
+h1 {color:cyan; text-shadow:0 0 10px cyan; font-size:1.8rem;}
+h3 {color:#0ff; font-size:1.1rem; margin:8px 0;}
+.card {background:rgba(255,255,255,0.06); padding:15px; border-radius:12px; margin:18px 0; text-align:center; box-shadow:0 0 12px rgba(0,255,255,0.2);}
+button {padding:10px 14px; margin:6px; background:linear-gradient(45deg,#0ff,#08f); border:none; border-radius:10px; cursor:pointer; color:#000; font-weight:bold; box-shadow:0 0 12px #0ff; transition:0.2s; font-size:0.9rem;}
+button:hover {transform:scale(1.05); box-shadow:0 0 20px #0ff;}
+button:active {transform:scale(0.95); box-shadow:0 0 8px #0ff;}
+input,textarea {width:90%; max-width:100%; padding:10px; margin:8px 0; background:#111; color:#0ff; border:1px solid #333; border-radius:8px; font-size:0.9rem;}
+textarea {height:160px;}
+pre {background:#111; padding:10px; border-radius:8px; overflow:auto; max-height:200px; text-align:left; font-size:0.85rem;}
+footer {margin-top:20px; color:#888; font-size:0.85rem; position:fixed; bottom:0; width:100%; text-align:center; background:rgba(0,0,0,0.5); padding:10px;}
+
+/* Responsive tweaks */
+@media (max-width:600px){
+  h1{font-size:1.4rem;}
+  h3{font-size:1rem;}
+  button{padding:8px 10px; font-size:0.8rem;}
+  textarea{height:140px;}
+  pre{font-size:0.8rem;}
+}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+
+<div class="container">
+<h1>🌌 Web Tools by Yongky v1 🌌</h1>
+<p>Background hitam animasi + 4 fitur serba button</p>
+
+<div class="card">
+<h3>1. Cek IP Kamu</h3>
+<button onclick="cekIp()">🔍 Cek IP Saya</button>
+<pre id="myIp">-</pre>
+</div>
+
+<div class="card">
+<h3>2. Cek IP Domain</h3>
+<input id="domain" placeholder="example.com">
+<button onclick="cekDomain()">🔍 Cek IP Domain</button>
+<pre id="domainIp">-</pre>
+</div>
+
+<div class="card">
+<h3>3. Get Source Code Web</h3>
+<input id="srcUrl" placeholder="https://example.com">
+<div>
+<button onclick="getSource()">📜 Ambil Source Code</button>
+<button onclick="downloadSource()">💾 Download</button>
+<button onclick="copySource()">📋 Salin</button>
+</div>
+<textarea id="srcCode"></textarea>
+</div>
+
+<div class="card">
+<h3>4. Cek Headers</h3>
+<input id="hdrUrl" placeholder="https://example.com">
+<button onclick="cekHeaders()">📡 Cek Headers</button>
+<pre id="hdrs">-</pre>
+</div>
+
+<footer>✨ Dibuat dengan ❤ oleh Yongky — v1</footer>
+</div>
+
+<script>
+// Background animasi bintang + nebula
+const c=document.getElementById("bg"),x=c.getContext("2d");
+function resizeCanvas(){c.width=innerWidth; c.height=innerHeight;}
+window.addEventListener('resize',resizeCanvas);
+resizeCanvas();
+let stars=Array(200).fill().map(()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*2,dy:Math.random()*0.8+0.2}));
+function anim(){ 
+  let grad=x.createRadialGradient(c.width/2,c.height/2,100,c.width/2,c.height/2,c.width);
+  grad.addColorStop(0,"rgba(0,255,255,0.15)");
+  grad.addColorStop(1,"rgba(0,0,0,1)");
+  x.fillStyle=grad; x.fillRect(0,0,c.width,c.height);
+  stars.forEach(s=>{
+    x.beginPath();
+    let alpha = Math.random()*0.8+0.2; // efek kedip
+    x.fillStyle=`rgba(255,255,255,${alpha})`;
+    x.arc(s.x,s.y,s.r,0,2*Math.PI); x.fill();
+    s.y+=s.dy; if(s.y>c.height) s.y=0;
+  });
+  requestAnimationFrame(anim);
+}
+anim();
+
+// Fitur 1: Cek IP Kamu
+async function cekIp(){
+  myIp.textContent="Loading...";
+  try{
+    let r=await fetch("https://api.ipify.org?format=json");
+    let d=await r.json();
+    myIp.textContent=JSON.stringify(d,null,2);
+  }catch(e){myIp.textContent="Error: "+e;}
+}
+
+// Fitur 2: Cek IP Domain
+async function cekDomain(){
+  domainIp.textContent="Loading...";
+  let dom=document.getElementById("domain").value;
+  if(!dom){domainIp.textContent="Masukkan domain!"; return;}
+  let domPattern=/^[a-z0-9.-]+\.[a-z]{2,}$/i;
+  if(!domPattern.test(dom)){domainIp.textContent="Domain tidak valid!"; return;}
+  try{
+    let r=await fetch("https://dns.google/resolve?name="+dom+"&type=A");
+    let d=await r.json();
+    domainIp.textContent=JSON.stringify(d,null,2);
+  }catch(e){domainIp.textContent="Error: "+e;}
+}
+
+// Fitur 3: Get Source Code
+async function getSource(){
+  srcCode.value="Loading...";
+  let url=document.getElementById("srcUrl").value;
+  if(!url){srcCode.value="Masukkan URL!"; return;}
+  try{
+    let r=await fetch("https://api.allorigins.win/raw?url="+encodeURIComponent(url));
+    let t=await r.text();
+    srcCode.value=t;
+    srcCode.scrollTop = srcCode.scrollHeight;
+  }catch(e){srcCode.value="Error: "+e;}
+}
+
+// Download source code
+function downloadSource(){
+  const text=srcCode.value;
+  if(!text){alert("Belum ada source code"); return;}
+  const blob=new Blob([text],{type:"text/plain"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="file.txt";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+// Copy source code dengan fallback
+async function copySource(){
+  const text=srcCode.value;
+  if(!text){alert("Belum ada source code"); return;}
+
+  if(navigator.clipboard && window.isSecureContext){
+    try{
+      await navigator.clipboard.writeText(text);
+      alert("Source code berhasil disalin!");
+    }catch(err){
+      console.warn("Clipboard API gagal:", err);
+      fallbackCopy(text);
+    }
+  }else{
+    fallbackCopy(text);
+  }
+}
+
+// Fallback copy pakai textarea sementara
+function fallbackCopy(text){
+  const temp=document.createElement("textarea");
+  temp.value=text;
+  temp.style.position="fixed";
+  temp.style.top="-1000px";
+  temp.style.left="-1000px";
+  document.body.appendChild(temp);
+  temp.focus();
+  temp.select();
+  try{
+    let successful=document.execCommand('copy');
+    if(successful) alert("Source code berhasil disalin (fallback)!");
+    else alert("Gagal menyalin source code");
+  }catch(err){alert("Gagal menyalin source code: "+err);}
+  document.body.removeChild(temp);
+}
+
+// Fitur 4: Cek Headers
+async function cekHeaders(){
+  hdrs.textContent="Loading...";
+  let url=document.getElementById("hdrUrl").value;
+  if(!url){hdrs.textContent="Masukkan URL!"; return;}
+  try{
+    let r=await fetch("https://api.allorigins.win/raw?url="+encodeURIComponent(url));
+    hdrs.textContent="Status: "+r.status+" "+r.statusText+"\nNote: header asli terbatas di client-side.";
+  }catch(e){hdrs.textContent="Error: "+e;}
+}
+</script>
+</body>
+  </html>
